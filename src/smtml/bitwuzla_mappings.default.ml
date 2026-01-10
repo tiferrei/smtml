@@ -522,9 +522,12 @@ module Fresh_bitwuzla (B : Bitwuzla_cxx.S) : M = struct
   end
 
   module Solver = struct
-    let update_options _params options =
-      Bitwuzla_cxx.Options.(set options Produce_models true);
-      options
+    let update_options params options = match params with
+      | None -> options
+      | Some params ->
+        Bitwuzla_cxx.Options.(set options Produce_models (Params.get params Model));
+        Bitwuzla_cxx.Options.(set options Seed (Params.get params Random_seed));
+        options
 
     let make ?params ?logic:_ () =
       Bitwuzla_cxx.Options.default () |> update_options params |> Solver.create
