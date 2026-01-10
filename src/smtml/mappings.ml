@@ -427,6 +427,25 @@ module Make (M_with_make : M_with_make) : S_with_fresh = struct
           Fmt.failwith {|Bitv: Unsupported convert operator "%a"|} Cvtop.pp op
     end
 
+    module type Bitvn_sig = sig
+      val n : int
+    end
+
+    module IN (B : Bitvn_sig) = Bitv_impl (struct
+      type elt = Z.t
+
+      let v i = M.Bitv.v (Z.to_string i) B.n
+      let bitwidth = B.n
+
+      let to_ieee_bv _ =
+        Fmt.failwith {|Bitv: Unsupported operator "to_ieee_bv" for IN|}
+
+      module Ixx = struct
+        let of_int i = Z.of_int i
+        let shift_left v i = Z.shift_left v i
+      end
+    end)
+
     module I8 = Bitv_impl (struct
       type elt = int
 
@@ -612,9 +631,13 @@ module Make (M_with_make : M_with_make) : S_with_fresh = struct
       | Ty_bitv 8 -> I8.unop
       | Ty_bitv 32 -> I32.unop
       | Ty_bitv 64 -> I64.unop
+      | Ty_bitv n ->
+        let module N = struct let n = n end in
+        let module INN = IN (N) in
+        INN.unop
       | Ty_fp 32 -> Float32_impl.unop
       | Ty_fp 64 -> Float64_impl.unop
-      | ( Ty_bitv _ | Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none
+      | ( Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none
         | Ty_roundingMode ) as ty ->
         Fmt.failwith "Unsupported encoding of unary operators for theory '%a'"
           Ty.pp ty
@@ -628,9 +651,13 @@ module Make (M_with_make : M_with_make) : S_with_fresh = struct
       | Ty_bitv 8 -> I8.binop
       | Ty_bitv 32 -> I32.binop
       | Ty_bitv 64 -> I64.binop
+      | Ty_bitv n ->
+        let module N = struct let n = n end in
+        let module INN = IN (N) in
+        INN.binop
       | Ty_fp 32 -> Float32_impl.binop
       | Ty_fp 64 -> Float64_impl.binop
-      | ( Ty_bitv _ | Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none
+      | ( Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none
         | Ty_roundingMode ) as ty ->
         Fmt.failwith "Unsupported encoding of binary operators for theory '%a'"
           Ty.pp ty
@@ -641,9 +668,13 @@ module Make (M_with_make : M_with_make) : S_with_fresh = struct
       | Ty_bitv 8 -> I8.triop
       | Ty_bitv 32 -> I32.triop
       | Ty_bitv 64 -> I64.triop
+      | Ty_bitv n ->
+        let module N = struct let n = n end in
+        let module INN = IN (N) in
+        INN.triop
       | Ty_fp 32 -> Float32_impl.triop
       | Ty_fp 64 -> Float64_impl.triop
-      | ( Ty_int | Ty_real | Ty_bitv _ | Ty_fp _ | Ty_list | Ty_app | Ty_unit
+      | ( Ty_int | Ty_real | Ty_fp _ | Ty_list | Ty_app | Ty_unit
         | Ty_none | Ty_regexp | Ty_roundingMode ) as ty ->
         Fmt.failwith "Unsupported encoding of ternary operators for theory '%a'"
           Ty.pp ty
@@ -656,9 +687,13 @@ module Make (M_with_make : M_with_make) : S_with_fresh = struct
       | Ty_bitv 8 -> I8.relop
       | Ty_bitv 32 -> I32.relop
       | Ty_bitv 64 -> I64.relop
+      | Ty_bitv n ->
+        let module N = struct let n = n end in
+        let module INN = IN (N) in
+        INN.relop
       | Ty_fp 32 -> Float32_impl.relop
       | Ty_fp 64 -> Float64_impl.relop
-      | ( Ty_bitv _ | Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none | Ty_regexp
+      | ( Ty_fp _ | Ty_list | Ty_app | Ty_unit | Ty_none | Ty_regexp
         | Ty_roundingMode ) as ty ->
         Fmt.failwith "Unsupported encoding of relop operators for theory '%a'"
           Ty.pp ty
